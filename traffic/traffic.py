@@ -32,7 +32,7 @@ def main():
     model = get_model()
 
     # Fit model on training data
-    model.fit(x_train, y_train, epochs=EPOCHS)
+    model.fit(x_train, y_train, epochs=EPOCHS, batch_size = 128)
 
     # Evaluate neural network performance
     model.evaluate(x_test,  y_test, verbose=2)
@@ -58,8 +58,15 @@ def load_data(data_dir):
     be a list of integer labels, representing the categories for each of the
     corresponding `images`.
     """
-    raise NotImplementedError
-
+    print("Loading data")
+    images = []
+    labels = []
+    for i in range(43):
+        for filename in os.listdir(f"{data_dir}/{str(i)}"):
+            images.append(np.array(cv2.resize(cv2.imread(f"{data_dir}/{str(i)}/{filename}"), (IMG_WIDTH, IMG_HEIGHT))))
+            labels.append(i)
+    print("Data loaded")
+    return (images, labels)
 
 def get_model():
     """
@@ -67,7 +74,31 @@ def get_model():
     `input_shape` of the first layer is `(IMG_WIDTH, IMG_HEIGHT, 3)`.
     The output layer should have `NUM_CATEGORIES` units, one for each category.
     """
-    raise NotImplementedError
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Conv2D(
+            32, (3, 3), activation = "relu", input_shape = (IMG_WIDTH, IMG_HEIGHT, 3)
+        ),
+        tf.keras.layers.Conv2D(
+            32, (3, 3), activation = "relu"
+        ),
+        tf.keras.layers.MaxPool2D(pool_size = (2, 2)),
+
+        tf.keras.layers.Flatten(),
+
+        tf.keras.layers.Dense(128, activation = "relu"),
+        tf.keras.layers.Dense(128, activation = "relu"),
+        tf.keras.layers.Dense(128, activation = "relu"),
+        tf.keras.layers.Dense(128, activation = "relu"),
+        tf.keras.layers.Dropout(0.45),
+
+        tf.keras.layers.Dense(43, activation = "softmax")
+    ])
+    model.compile(
+        optimizer = "adam",
+        loss = "categorical_crossentropy",
+        metrics = ["accuracy"]
+    )
+    return model
 
 
 if __name__ == "__main__":
